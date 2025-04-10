@@ -1,0 +1,50 @@
+# 0. testing
+cls*
+zzz*
+CLAUDE*
+cls_how_tos/
+screencaps/
+WritersToolkit.iconset/
+
+# 1. Node modules
+node_modules/
+
+# 2. Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 3. Environment variable files
+.env
+.env.*
+
+# 4. Build folders (commonly used in Electron apps)
+build/
+dist/
+out/
+release/
+release-builds/
+
+# 5. Coverage reports
+coverage/
+
+# 6. OS-specific files
+.DS_Store
+Thumbs.db
+
+# 7. Packaged dependencies / archives
+*.tgz
+*.zip
+*.asar
+
+# 8. Temporary debug files
+*.log
+*.temp
+
+# 9. Other optional ignores
+.idea/
+.vscode/
+
+# Sublime Text project/workspace files
+*.sublime-project
+*.sublime-workspace
