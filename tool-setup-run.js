@@ -155,54 +155,68 @@ runBtn.addEventListener('click', async () => {
   runBtn.disabled = true;
   setupBtn.disabled = true;
   
-  // Clear output and show starting message
+  // Clear output and show starting message - clear all previous output
   outputElement.textContent = `Starting ${toolData.title || toolData.name}...\n\n`;
   
   try {
+    // Remove any previous output listeners to avoid duplicate output
+    window.electronAPI.removeAllListeners('tool-output');
+    window.electronAPI.removeAllListeners('tool-finished');
+    window.electronAPI.removeAllListeners('tool-error');
+    
     // Run the tool
     currentRunId = await window.electronAPI.startToolRun(toolData.name, currentOptionValues);
     console.log('Tool started with run ID:', currentRunId);
     
     // Listen for output messages
     window.electronAPI.onToolOutput((data) => {
-      // Append output to the output element
-      outputElement.textContent += data.text;
-      
-      // Auto scroll to bottom
-      outputElement.scrollTop = outputElement.scrollHeight;
+      // Only append output for the current run
+      if (data.runId === currentRunId) {
+        // Append output to the output element
+        outputElement.textContent += data.text;
+        
+        // Auto scroll to bottom
+        outputElement.scrollTop = outputElement.scrollHeight;
+      }
     });
     
     // Listen for tool completion
     window.electronAPI.onToolFinished((result) => {
-      console.log('Tool finished:', result);
-      isRunning = false;
-      stopTimer();
-      
-      // Update UI
-      runBtn.disabled = false;
-      setupBtn.disabled = false;
-      
-      // Add completion message
-      outputElement.textContent += `\n\nTool finished with exit code: ${result.code}`;
-      
-      if (result.createdFiles && result.createdFiles.length > 0) {
-        outputElement.textContent += `\n\nFiles created/modified:\n${result.createdFiles.join('\n')}`;
+      // Only process completion for the current run
+      if (result.runId === currentRunId) {
+        console.log('Tool finished:', result);
+        isRunning = false;
+        stopTimer();
+        
+        // Update UI
+        runBtn.disabled = false;
+        setupBtn.disabled = false;
+        
+        // Add completion message
+        outputElement.textContent += `\n\nTool finished with exit code: ${result.code}`;
+        
+        if (result.createdFiles && result.createdFiles.length > 0) {
+          outputElement.textContent += `\n\nFiles created/modified:\n${result.createdFiles.join('\n')}`;
+        }
+        
+        currentRunId = null;
       }
-      
-      currentRunId = null;
     });
     
     // Listen for tool errors
     window.electronAPI.onToolError((error) => {
-      console.error('Tool error:', error);
-      outputElement.textContent += `\n\nError: ${error.error}`;
-      isRunning = false;
-      stopTimer();
-      
-      // Update UI
-      runBtn.disabled = false;
-      setupBtn.disabled = false;
-      currentRunId = null;
+      // Only process errors for the current run
+      if (error.runId === currentRunId) {
+        console.error('Tool error:', error);
+        outputElement.textContent += `\n\nError: ${error.error}`;
+        isRunning = false;
+        stopTimer();
+        
+        // Update UI
+        runBtn.disabled = false;
+        setupBtn.disabled = false;
+        currentRunId = null;
+      }
     });
   } catch (error) {
     // Handle errors

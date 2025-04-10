@@ -687,7 +687,16 @@ function setupIPCHandlers() {
       // Verify the selected path is within ~/writing directory
       if (!selectedPath.startsWith(writingPath)) {
         console.warn('Selected file is outside allowed directory:', selectedPath);
-        // Could show an error dialog here
+        
+        // Show error dialog to user
+        await dialog.showMessageBox(toolSetupRunWindow || mainWindow, {
+          type: 'error',
+          title: 'Invalid File Selection',
+          message: 'File Selection Restricted',
+          detail: `You must select a file within the ~/writing directory. Please try again.`,
+          buttons: ['OK']
+        });
+        
         return null;
       }
       
@@ -739,6 +748,16 @@ function setupIPCHandlers() {
       // Verify the selected path is within ~/writing directory
       if (!selectedPath.startsWith(writingPath)) {
         console.warn('Selected directory is outside allowed directory:', selectedPath);
+        
+        // Show error dialog to user
+        await dialog.showMessageBox(toolSetupRunWindow || mainWindow, {
+          type: 'error',
+          title: 'Invalid Directory Selection',
+          message: 'Directory Selection Restricted',
+          detail: `You must select a directory within the ~/writing directory. Please try again.`,
+          buttons: ['OK']
+        });
+        
         return null;
       }
       

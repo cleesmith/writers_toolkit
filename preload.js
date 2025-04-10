@@ -31,6 +31,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onToolOutput: (callback) => ipcRenderer.on('tool-output', (_, data) => callback(data)),
   onToolFinished: (callback) => ipcRenderer.on('tool-finished', (_, data) => callback(data)),
   onToolError: (callback) => ipcRenderer.on('tool-error', (_, data) => callback(data)),
+  removeAllListeners: (channel) => {
+    if (channel === 'tool-output') ipcRenderer.removeAllListeners('tool-output');
+    if (channel === 'tool-finished') ipcRenderer.removeAllListeners('tool-finished');
+    if (channel === 'tool-error') ipcRenderer.removeAllListeners('tool-error');
+  },
   
   // API settings
   getClaudeApiSettings: () => ipcRenderer.invoke('get-claude-api-settings'),
