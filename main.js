@@ -635,8 +635,6 @@ function setupIPCHandlers() {
   // File selection dialog
   ipcMain.handle('select-file', async (event, options) => {
     try {
-      console.log('Select file dialog requested with options:', options);
-      
       // Ensure base directory is inside ~/writing
       const homePath = os.homedir();
       const writingPath = path.join(homePath, 'writing');
@@ -669,14 +667,10 @@ function setupIPCHandlers() {
         message: 'Please select a file within your writing projects'
       };
       
-      console.log('Dialog options:', dialogOptions);
-      
       const result = await dialog.showOpenDialog(
         options.parentWindow || toolSetupRunWindow || mainWindow, 
         dialogOptions
       );
-      
-      console.log('Dialog result:', result);
       
       if (result.canceled || result.filePaths.length === 0) {
         return null;
@@ -710,8 +704,6 @@ function setupIPCHandlers() {
   // Directory selection dialog
   ipcMain.handle('select-directory', async (event, options) => {
     try {
-      console.log('Select directory dialog requested with options:', options);
-      
       // Ensure base directory is inside ~/writing
       const homePath = os.homedir();
       const writingPath = path.join(homePath, 'writing');
@@ -730,14 +722,10 @@ function setupIPCHandlers() {
         message: 'Please select a directory within your writing projects'
       };
       
-      console.log('Dialog options:', dialogOptions);
-      
       const result = await dialog.showOpenDialog(
         options.parentWindow || toolSetupRunWindow || mainWindow, 
         dialogOptions
       );
-      
-      console.log('Dialog result:', result);
       
       if (result.canceled || result.filePaths.length === 0) {
         return null;
@@ -770,8 +758,7 @@ function setupIPCHandlers() {
   
   // Handle project dialog closing
   ipcMain.on('close-project-dialog', (event, action, data) => {
-    console.log('Dialog close action:', action);
-    
+
     if (projectDialogWindow && !projectDialogWindow.isDestroyed()) {
       if (action === 'cancelled') {
         // For Cancel, disable auto-showing and destroy the window

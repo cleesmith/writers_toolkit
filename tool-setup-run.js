@@ -231,9 +231,24 @@ runBtn.addEventListener('click', async () => {
   }
 });
 
-// Clear button handler - only clear output, not elapsed time
+// Clear button handler - updated to reset elapsed time and disable Run button
 clearBtn.addEventListener('click', () => {
+  // Clear output area
   outputElement.textContent = 'Output cleared.';
+  
+  // Reset elapsed time display
+  elapsedTimeElement.textContent = 'elapsed time: 0m 0s';
+  
+  // Reset timer variables
+  startTime = null;
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  // Disable Run button until setup is completed again
+  runBtn.disabled = true;
+  setupCompleted = false;
 });
 
 // Show the setup dialog
