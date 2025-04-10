@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const { v4: uuidv4 } = require('uuid');
 const appState = require('./src/state.js');
@@ -259,10 +260,12 @@ function setupProjectHandlers() {
 function createToolSetupRunDialog(toolName) {
   // Create the dialog window
   toolSetupRunWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: mainWindow.getSize()[0],
+    height: mainWindow.getSize()[1],
+    x: mainWindow.getPosition()[0],
+    y: mainWindow.getPosition()[1],
     parent: mainWindow,
-    modal: false,
+    modal: true,
     show: false,
     webPreferences: {
       nodeIntegration: false,
@@ -296,6 +299,10 @@ function createToolSetupRunDialog(toolName) {
   toolSetupRunWindow.on('closed', () => {
     toolSetupRunWindow = null;
   });
+  
+  // Prevent the tool window from being resized or moved
+  toolSetupRunWindow.setResizable(false);
+  toolSetupRunWindow.setMovable(false);
   
   return toolSetupRunWindow;
 }
@@ -402,7 +409,7 @@ function setupToolHandlers() {
       }
       
       // Start the tool and get the run ID
-      const runId = uuidv4(); // You would need to import uuid
+      const runId = uuidv4();
       
       // Run the tool and handle output
       toolRunner.runTool(toolName, optionValues, (output) => {
@@ -603,6 +610,7 @@ function setupIPCHandlers() {
   
   // Handle quit request from renderer
   ipcMain.on('app-quit', () => {
+    console.log('Quit requested from renderer');
     app.quit();
   });
   
@@ -627,22 +635,63 @@ function setupIPCHandlers() {
   // File selection dialog
   ipcMain.handle('select-file', async (event, options) => {
     try {
-      const { filePaths, canceled } = await dialog.showOpenDialog(
-        options.parentWindow || mainWindow, 
-        {
-          title: options.title || 'Select File',
-          defaultPath: options.defaultPath || appState.DEFAULT_SAVE_DIR,
-          buttonLabel: options.buttonLabel || 'Select',
-          filters: options.filters || [{ name: 'All Files', extensions: ['*'] }],
-          properties: ['openFile']
-        }
+      console.log('Select file dialog requested with options:', options);
+      
+      // Ensure base directory is inside ~/writing
+      const homePath = os.homedir();
+      const writingPath = path.join(homePath, 'writing');
+      let startPath = options.defaultPath || appState.DEFAULT_SAVE_DIR || writingPath;
+      
+      // Force path to be within ~/writing
+      if (!startPath.startsWith(writingPath)) {
+        startPath = writingPath;
+      }
+      
+      // Set default filters to only show .txt files
+      const defaultFilters = [
+        { name: 'Text Files', extensions: ['txt'] },
+        { name: 'All Files', extensions: ['*'] }
+      ];
+      
+      // For tokens_words_counter.js, only allow .txt files
+      if (currentTool === 'tokens_words_counter.js') {
+        // Only use text files filter for this tool
+        options.filters = [{ name: 'Text Files', extensions: ['txt', 'md'] }];
+      }
+      
+      const dialogOptions = {
+        title: options.title || 'Select File',
+        defaultPath: startPath,
+        buttonLabel: options.buttonLabel || 'Select',
+        filters: options.filters || defaultFilters,
+        properties: ['openFile'],
+        // Restrict to ~/writing directory
+        message: 'Please select a file within your writing projects'
+      };
+      
+      console.log('Dialog options:', dialogOptions);
+      
+      const result = await dialog.showOpenDialog(
+        options.parentWindow || toolSetupRunWindow || mainWindow, 
+        dialogOptions
       );
       
-      if (canceled || filePaths.length === 0) {
+      console.log('Dialog result:', result);
+      
+      if (result.canceled || result.filePaths.length === 0) {
         return null;
       }
       
-      return filePaths[0];
+      const selectedPath = result.filePaths[0];
+      
+      // Verify the selected path is within ~/writing directory
+      if (!selectedPath.startsWith(writingPath)) {
+        console.warn('Selected file is outside allowed directory:', selectedPath);
+        // Could show an error dialog here
+        return null;
+      }
+      
+      return selectedPath;
     } catch (error) {
       console.error('Error in file selection:', error);
       throw error;
@@ -652,21 +701,48 @@ function setupIPCHandlers() {
   // Directory selection dialog
   ipcMain.handle('select-directory', async (event, options) => {
     try {
-      const { filePaths, canceled } = await dialog.showOpenDialog(
-        options.parentWindow || mainWindow, 
-        {
-          title: options.title || 'Select Directory',
-          defaultPath: options.defaultPath || appState.DEFAULT_SAVE_DIR,
-          buttonLabel: options.buttonLabel || 'Select',
-          properties: ['openDirectory']
-        }
+      console.log('Select directory dialog requested with options:', options);
+      
+      // Ensure base directory is inside ~/writing
+      const homePath = os.homedir();
+      const writingPath = path.join(homePath, 'writing');
+      let startPath = options.defaultPath || appState.DEFAULT_SAVE_DIR || writingPath;
+      
+      // Force path to be within ~/writing
+      if (!startPath.startsWith(writingPath)) {
+        startPath = writingPath;
+      }
+      
+      const dialogOptions = {
+        title: options.title || 'Select Directory',
+        defaultPath: startPath,
+        buttonLabel: options.buttonLabel || 'Select',
+        properties: ['openDirectory'],
+        message: 'Please select a directory within your writing projects'
+      };
+      
+      console.log('Dialog options:', dialogOptions);
+      
+      const result = await dialog.showOpenDialog(
+        options.parentWindow || toolSetupRunWindow || mainWindow, 
+        dialogOptions
       );
       
-      if (canceled || filePaths.length === 0) {
+      console.log('Dialog result:', result);
+      
+      if (result.canceled || result.filePaths.length === 0) {
         return null;
       }
       
-      return filePaths[0];
+      const selectedPath = result.filePaths[0];
+      
+      // Verify the selected path is within ~/writing directory
+      if (!selectedPath.startsWith(writingPath)) {
+        console.warn('Selected directory is outside allowed directory:', selectedPath);
+        return null;
+      }
+      
+      return selectedPath;
     } catch (error) {
       console.error('Error in directory selection:', error);
       throw error;

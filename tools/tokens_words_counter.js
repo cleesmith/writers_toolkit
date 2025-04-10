@@ -103,7 +103,6 @@ async function readTextFile(filePath) {
  * @returns {Promise<number>} Number of tokens
  */
 async function countTokens(client, text) {
-    // Simulate small delay to mimic Python script's sleep
     await new Promise(resolve => setTimeout(resolve, 3000));
 
     try {

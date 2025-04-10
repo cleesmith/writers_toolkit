@@ -1,13 +1,20 @@
 // Get UI elements
 const toolNameElement = document.getElementById('tool-name');
+const dialogToolNameElement = document.getElementById('dialog-tool-name');
 const closeBtn = document.getElementById('close-btn');
 const setupBtn = document.getElementById('setup-btn');
 const runBtn = document.getElementById('run-btn');
 const clearBtn = document.getElementById('clear-btn');
 const forceQuitBtn = document.getElementById('force-quit-btn');
-const optionsContainer = document.getElementById('options-container');
 const outputElement = document.getElementById('output');
 const elapsedTimeElement = document.getElementById('elapsed-time');
+
+// Dialog elements
+const setupDialogOverlay = document.getElementById('setup-dialog-overlay');
+const setupDialogClose = document.getElementById('setup-dialog-close');
+const setupDialogCancel = document.getElementById('setup-dialog-cancel');
+const setupDialogApply = document.getElementById('setup-dialog-apply');
+const dialogOptionsContainer = document.getElementById('dialog-options-container');
 
 // Tool state
 let toolData = null;
@@ -16,6 +23,8 @@ let isRunning = false;
 let startTime = null;
 let timerInterval = null;
 let currentRunId = null;
+let setupCompleted = false;
+let currentOptionValues = {};
 
 // Initialize when the window loads
 window.addEventListener('DOMContentLoaded', async () => {
@@ -24,15 +33,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     toolData = await window.electronAPI.getCurrentTool();
     
     if (toolData) {
-      // Set tool name
-      toolNameElement.textContent = toolData.name;
-      document.title = `Writer's Toolkit - ${toolData.name}`;
+      // Set tool name in both main view and dialog
+      toolNameElement.textContent = toolData.title || toolData.name;
+      dialogToolNameElement.textContent = toolData.title || toolData.name;
+      document.title = `Writer's Toolkit - ${toolData.title || toolData.name}`;
       
       // Get tool options
       currentToolOptions = await window.electronAPI.getToolOptions(toolData.name);
+      console.log('Loaded tool options:', currentToolOptions);
       
-      // Generate form controls for options
-      generateOptionsForm(currentToolOptions);
+      // Disable Run button until setup is completed
+      runBtn.disabled = true;
     } else {
       outputElement.textContent = 'Error: No tool selected!';
     }
@@ -64,23 +75,63 @@ closeBtn.addEventListener('click', () => {
   }
 });
 
-// Setup button handler
+// Force Quit button handler - always enabled and immediately quits the app
+forceQuitBtn.addEventListener('click', () => {
+  console.log('Force quit requested');
+  window.electronAPI.quitApp();
+});
+
+// Setup button handler - now opens the setup dialog
 setupBtn.addEventListener('click', () => {
+  console.log('Setup button clicked');
+  // Generate form controls for options
+  generateOptionsForm(currentToolOptions);
+  // Show the dialog
+  showSetupDialog();
+});
+
+// Setup dialog close button
+setupDialogClose.addEventListener('click', () => {
+  hideSetupDialog();
+});
+
+// Setup dialog cancel button
+setupDialogCancel.addEventListener('click', () => {
+  hideSetupDialog();
+});
+
+// Setup dialog apply button
+setupDialogApply.addEventListener('click', () => {
+  console.log('Apply settings clicked');
+  // Validate the form
+  if (!validateOptionsForm()) {
+    console.log('Form validation failed');
+    return; // Don't close dialog if validation fails
+  }
+  
   // Gather all options from form
-  const optionValues = gatherOptionValues();
+  currentOptionValues = gatherOptionValues();
+  console.log('Gathered option values:', currentOptionValues);
   
   // Display setup information in output area
-  outputElement.textContent = `Tool: ${toolData.name}\n\nOptions:\n`;
+  outputElement.textContent = `Tool: ${toolData.title || toolData.name}\n\nOptions:\n`;
   
   // Add each option and its value
-  for (const [key, value] of Object.entries(optionValues)) {
+  for (const [key, value] of Object.entries(currentOptionValues)) {
     outputElement.textContent += `${key}: ${value}\n`;
   }
   
   outputElement.textContent += '\nReady to run. Click the "Run" button to execute.';
   
   // Store the options for the run
-  window.electronAPI.setToolOptions(optionValues);
+  window.electronAPI.setToolOptions(currentOptionValues);
+  
+  // Enable Run button
+  runBtn.disabled = false;
+  setupCompleted = true;
+  
+  // Close the dialog
+  hideSetupDialog();
 });
 
 // Run button handler
@@ -90,8 +141,10 @@ runBtn.addEventListener('click', async () => {
     return;
   }
   
-  // Gather all options from form
-  const optionValues = gatherOptionValues();
+  if (!setupCompleted) {
+    outputElement.textContent += '\nPlease complete Setup first.';
+    return;
+  }
   
   // Start timing
   startTime = Date.now();
@@ -103,11 +156,12 @@ runBtn.addEventListener('click', async () => {
   setupBtn.disabled = true;
   
   // Clear output and show starting message
-  outputElement.textContent = `Starting ${toolData.name}...\n\n`;
+  outputElement.textContent = `Starting ${toolData.title || toolData.name}...\n\n`;
   
   try {
     // Run the tool
-    currentRunId = await window.electronAPI.startToolRun(toolData.name, optionValues);
+    currentRunId = await window.electronAPI.startToolRun(toolData.name, currentOptionValues);
+    console.log('Tool started with run ID:', currentRunId);
     
     // Listen for output messages
     window.electronAPI.onToolOutput((data) => {
@@ -120,6 +174,7 @@ runBtn.addEventListener('click', async () => {
     
     // Listen for tool completion
     window.electronAPI.onToolFinished((result) => {
+      console.log('Tool finished:', result);
       isRunning = false;
       stopTimer();
       
@@ -136,8 +191,22 @@ runBtn.addEventListener('click', async () => {
       
       currentRunId = null;
     });
+    
+    // Listen for tool errors
+    window.electronAPI.onToolError((error) => {
+      console.error('Tool error:', error);
+      outputElement.textContent += `\n\nError: ${error.error}`;
+      isRunning = false;
+      stopTimer();
+      
+      // Update UI
+      runBtn.disabled = false;
+      setupBtn.disabled = false;
+      currentRunId = null;
+    });
   } catch (error) {
     // Handle errors
+    console.error('Error running tool:', error);
     outputElement.textContent += `\nError running tool: ${error.message}`;
     isRunning = false;
     stopTimer();
@@ -148,43 +217,29 @@ runBtn.addEventListener('click', async () => {
   }
 });
 
-// Clear button handler
+// Clear button handler - only clear output, not elapsed time
 clearBtn.addEventListener('click', () => {
   outputElement.textContent = 'Output cleared.';
-  
-  // Reset timer display
-  elapsedTimeElement.textContent = 'elapsed time: 0m 0s';
 });
 
-// Force Quit button handler
-forceQuitBtn.addEventListener('click', async () => {
-  if (isRunning && currentRunId) {
-    try {
-      await window.electronAPI.stopTool(currentRunId);
-      
-      // Update UI
-      isRunning = false;
-      stopTimer();
-      runBtn.disabled = false;
-      setupBtn.disabled = false;
-      
-      outputElement.textContent += '\n\nTool execution forcefully terminated.';
-    } catch (error) {
-      outputElement.textContent += `\n\nError stopping tool: ${error.message}`;
-    }
-  } else {
-    outputElement.textContent += '\n\nNo tool currently running.';
-  }
-});
+// Show the setup dialog
+function showSetupDialog() {
+  setupDialogOverlay.style.display = 'flex';
+}
+
+// Hide the setup dialog
+function hideSetupDialog() {
+  setupDialogOverlay.style.display = 'none';
+}
 
 // Generate form controls for tool options
 function generateOptionsForm(options) {
-  optionsContainer.innerHTML = '';
+  dialogOptionsContainer.innerHTML = '';
   
   if (!options || options.length === 0) {
     const emptyMessage = document.createElement('p');
     emptyMessage.textContent = 'This tool has no configurable options.';
-    optionsContainer.appendChild(emptyMessage);
+    dialogOptionsContainer.appendChild(emptyMessage);
     return;
   }
   
@@ -196,6 +251,9 @@ function generateOptionsForm(options) {
     const label = document.createElement('label');
     label.setAttribute('for', `option-${option.name}`);
     label.textContent = option.label || option.name;
+    if (option.required) {
+      label.textContent += ' *';
+    }
     formGroup.appendChild(label);
     
     // Add description if available
@@ -274,18 +332,43 @@ function generateOptionsForm(options) {
         const browseBtn = document.createElement('button');
         browseBtn.type = 'button';
         browseBtn.textContent = 'Browse...';
-        browseBtn.addEventListener('click', async () => {
+        browseBtn.className = 'browse-button';
+        
+        // Improved file selection handler
+        browseBtn.addEventListener('click', async (event) => {
+          // Prevent default to ensure the event is properly handled
+          event.preventDefault();
+          event.stopPropagation();
+          
+          console.log('Browse button clicked for', option.name);
+          
           try {
+            const filters = option.filters || [{ name: 'All Files', extensions: ['*'] }];
+            console.log('Using filters:', filters);
+            
             const filePath = await window.electronAPI.selectFile({
               title: `Select ${option.label || option.name}`,
-              filters: option.filters || [{ name: 'All Files', extensions: ['*'] }]
+              filters: filters
             });
+            
+            console.log('Selected file path:', filePath);
             
             if (filePath) {
               input.value = filePath;
+              
+              // Trigger a change event to ensure validation recognizes the new value
+              const changeEvent = new Event('change', { bubbles: true });
+              input.dispatchEvent(changeEvent);
+              
+              // Clear any error message
+              const errorElement = document.getElementById(`error-${option.name}`);
+              if (errorElement) {
+                errorElement.style.display = 'none';
+              }
             }
           } catch (error) {
             console.error('Error selecting file:', error);
+            outputElement.textContent += `\nError selecting file: ${error.message}\n`;
           }
         });
         
@@ -308,17 +391,37 @@ function generateOptionsForm(options) {
         const browseDirBtn = document.createElement('button');
         browseDirBtn.type = 'button';
         browseDirBtn.textContent = 'Browse...';
-        browseDirBtn.addEventListener('click', async () => {
+        browseDirBtn.className = 'browse-button';
+        
+        browseDirBtn.addEventListener('click', async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          
+          console.log('Browse directory button clicked for', option.name);
+          
           try {
             const dirPath = await window.electronAPI.selectDirectory({
               title: `Select ${option.label || option.name}`
             });
             
+            console.log('Selected directory path:', dirPath);
+            
             if (dirPath) {
               input.value = dirPath;
+              
+              // Trigger change event
+              const changeEvent = new Event('change', { bubbles: true });
+              input.dispatchEvent(changeEvent);
+              
+              // Clear any error message
+              const errorElement = document.getElementById(`error-${option.name}`);
+              if (errorElement) {
+                errorElement.style.display = 'none';
+              }
             }
           } catch (error) {
             console.error('Error selecting directory:', error);
+            outputElement.textContent += `\nError selecting directory: ${error.message}\n`;
           }
         });
         
@@ -347,14 +450,64 @@ function generateOptionsForm(options) {
         break;
     }
     
+    // Add error message container
+    const errorMessage = document.createElement('div');
+    errorMessage.id = `error-${option.name}`;
+    errorMessage.className = 'error-message';
+    errorMessage.style.display = 'none';
+    formGroup.appendChild(errorMessage);
+    
     // Add required attribute if specified
     if (option.required) {
-      input.required = true;
+      input.dataset.required = 'true';
+      
+      // Add input validation event
+      input.addEventListener('change', () => {
+        validateInput(input, errorMessage, option);
+      });
+      
+      input.addEventListener('blur', () => {
+        validateInput(input, errorMessage, option);
+      });
     }
     
     // Add the form group to the container
-    optionsContainer.appendChild(formGroup);
+    dialogOptionsContainer.appendChild(formGroup);
   });
+}
+
+// Validate a single input field
+function validateInput(input, errorElement, option) {
+  if (option.required && !input.value.trim()) {
+    errorElement.textContent = 'This field is required';
+    errorElement.style.display = 'block';
+    return false;
+  } else {
+    errorElement.style.display = 'none';
+    return true;
+  }
+}
+
+// Validate the options form
+function validateOptionsForm() {
+  let isValid = true;
+  
+  currentToolOptions.forEach(option => {
+    if (option.required) {
+      const input = document.getElementById(`option-${option.name}`);
+      const errorElement = document.getElementById(`error-${option.name}`);
+      
+      if (!input.value.trim()) {
+        errorElement.textContent = 'This field is required';
+        errorElement.style.display = 'block';
+        isValid = false;
+      } else {
+        errorElement.style.display = 'none';
+      }
+    }
+  });
+  
+  return isValid;
 }
 
 // Gather all option values from the form
