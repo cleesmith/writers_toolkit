@@ -1,0 +1,152 @@
+/* Editor-specific styles that supplement the main styles.css */
+
+/* Editor layout */
+main {
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-info {
+  padding: 8px 0;
+  margin-bottom: 15px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Editor container */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin-top: 15px;
+}
+
+/* Text editor */
+#editor {
+  width: 100%;
+  flex-grow: 1;
+  resize: none;
+  font-family: monospace;
+  padding: 10px;
+  border: 1px solid var(--border-color-dark);
+  outline: none;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: #121824;
+  color: var(--text-color-light);
+  border-radius: 8px 8px 0 0;
+}
+
+body.light-mode #editor {
+  background-color: #f1f5f9;
+  color: var(--text-color-dark);
+  border: 1px solid var(--border-color-light);
+}
+
+/* Status bar */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 15px;
+  font-size: 12px;
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0 0 8px 8px;
+  border: 1px solid var(--border-color-dark);
+  border-top: none;
+}
+
+body.light-mode .status-bar {
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color-light);
+  border-top: none;
+}
+
+/* Specific adjustments for selects */
+select {
+  min-width: 120px;
+}
+
+/* Ensure icons are displayed correctly */
+body.dark-mode #sun-icon {
+  display: block;
+}
+
+body.dark-mode #moon-icon {
+  display: none;
+}
+
+body.light-mode #sun-icon {
+  display: none;
+}
+
+body.light-mode #moon-icon {
+  display: block;
+}
+
+/* Find functionality styles */
+.find-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto; /* Push to right side of toolbar */
+}
+
+.find-input {
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color-dark);
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text-color-light);
+  font-size: 14px;
+  width: 150px;
+}
+
+body.light-mode .find-input {
+  border: 1px solid var(--border-color-light);
+  background-color: white;
+  color: var(--text-color-dark);
+}
+
+.find-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Match highlight styling */
+.highlight-match {
+  background-color: rgba(255, 215, 0, 0.3); /* Soft gold highlight */
+  color: inherit;
+}
+
+.current-match {
+  background-color: rgba(255, 165, 0, 0.5); /* Orange for current match */
+  color: inherit;
+}
+
+/* Notification styles */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 1000;
+}

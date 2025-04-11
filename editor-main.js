@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -14,16 +14,29 @@ if (!fs.existsSync(WRITING_DIR)) {
 let mainWindow;
 
 function createWindow() {
+  // Get the primary display's work area dimensions
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  console.log('*** Screen dimensions:', screen.getPrimaryDisplay().workAreaSize);  
+
+  // Use 90% of the available width and height
+  const windowWidth = Math.floor(width * 0.95);
+  const windowHeight = Math.floor(height * 0.95);
+
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: windowWidth,
+    height: windowHeight,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
       preload: path.join(__dirname, 'editor-preload.js')
     },
-    title: 'Writer\'s Toolkit - Editor'
+    title: 'Writer\'s Toolkit - Editor',
+    backgroundColor: '#121212' // Dark background for better appearance during load
   });
+
+  // Center the window
+  mainWindow.center();
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'editor', 'index.html'));
   
@@ -67,7 +80,7 @@ function createWindow() {
         },
         { type: 'separator' },
         {
-          label: 'Exit',
+          label: 'Quit',
           accelerator: 'CmdOrCtrl+Q',
           click: () => {
             app.quit();
@@ -96,6 +109,14 @@ function createWindow() {
         { role: 'zoomIn' },
         { role: 'zoomOut' },
         { type: 'separator' },
+        {
+          label: 'Toggle Developer Tools',
+          accelerator: 'CmdOrCtrl+Shift+I',
+          click: () => {
+            mainWindow.webContents.toggleDevTools();
+          }
+        },
+        { type: 'separator' },
         { role: 'togglefullscreen' }
       ]
     }
@@ -107,6 +128,8 @@ function createWindow() {
 
 // File opening function
 async function openFile() {
+  if (!mainWindow) return;
+
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
     title: 'Open File',
     defaultPath: WRITING_DIR,
@@ -182,6 +205,12 @@ function setupIPC() {
   
   ipcMain.handle('open-file-dialog', async () => {
     return await openFile();
+  });
+
+  // Add this handler for quitting the application
+  ipcMain.on('app-quit', () => {
+    console.log('Quit requested from editor');
+    app.quit();
   });
 }
 

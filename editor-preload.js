@@ -4,6 +4,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld(
   'api', {
+    // Quit application
+    quitApp: () => ipcRenderer.send('app-quit'),
+    
     // File operations
     saveFile: (data) => ipcRenderer.invoke('save-file', data),
     openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),

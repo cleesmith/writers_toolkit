@@ -1,3 +1,6 @@
+
+npm run start-editor
+
 // In your HTML file (index.html)
 <!DOCTYPE html>
 <html>

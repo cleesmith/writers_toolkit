@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+    <title>Electron CodeMirror Editor</title>
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+    <link rel="stylesheet" href="node_modules/codemirror/theme/monokai.css">
+    <!-- CodeMirror search add-on CSS -->
+    <link rel="stylesheet" href="node_modules/codemirror/addon/dialog/dialog.css">
+    <style>
+      body, html { margin: 0; height: 100%; }
+      #buttonBar { padding: 5px; background: #333; color: #fff; }
+      button { margin-right: 10px; }
+      .CodeMirror { height: calc(100% - 40px); } /* Adjust for button bar */
+    </style>
+  </head>
+  <body>
+    <!-- Button bar for our commands -->
+    <div id="buttonBar">
+      <button id="openBtn">Open File</button>
+      <button id="saveBtn">Save File</button>
+      <button id="findBtn">Find</button>
+      <button id="quitBtn">Quit</button>
+    </div>
+    <!-- Textarea for CodeMirror -->
+    <textarea id="editor">// Start editing...</textarea>
+
+    <!-- CodeMirror JS -->
+    <script src="node_modules/codemirror/lib/codemirror.js"></script>
+    <!-- Language mode, for example JavaScript -->
+    <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
+    <!-- CodeMirror search add-ons -->
+    <script src="node_modules/codemirror/addon/search/searchcursor.js"></script>
+    <script src="node_modules/codemirror/addon/search/search.js"></script>
+    <script src="node_modules/codemirror/addon/dialog/dialog.js"></script>
+
+    <script>
+      const editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+        lineNumbers: true,
+        mode: 'text/plain',
+        theme: 'monokai',
+        lineWrapping: true
+      });
+
+      // Button: Open File
+      document.getElementById('openBtn').addEventListener('click', async () => {
+        const result = await window.electronAPI.openFile();
+        if (!result.canceled) {
+          editor.setValue(result.content);
+        }
+      });
+
+      // Button: Save File
+      document.getElementById('saveBtn').addEventListener('click', async () => {
+        const content = editor.getValue();
+        await window.electronAPI.saveFile(content);
+      });
+
+      // Button: Find in Text (use CodeMirror's built-in "find" command)
+      document.getElementById('findBtn').addEventListener('click', () => {
+        editor.execCommand('find');
+      });
+
+      // Button: Quit App
+      document.getElementById('quitBtn').addEventListener('click', async () => {
+        await window.electronAPI.quitApp();
+      });
+    </script>
+  </body>
+</html>

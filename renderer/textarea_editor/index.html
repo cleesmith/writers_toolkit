@@ -2,16 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
   <title>Writer's Toolkit - Editor</title>
-  
   <!-- Link to main application styles -->
   <link rel="stylesheet" href="../../styles.css">
-  
   <!-- Additional editor-specific styles -->
   <link rel="stylesheet" href="editor-specific.css">
-  
-  <!-- We'll load CodeMirror styles dynamically in JavaScript -->
 </head>
 <body class="dark-mode">
   <header>
@@ -75,23 +71,28 @@
           </select>
         </div>
 
-        <!-- Find button to trigger CodeMirror's search functionality -->
-        <button id="find-button" class="action-button">Find</button>
+        <!-- Simple find functionality -->
+        <div class="find-container">
+          <input 
+            type="text" 
+            id="find-input" 
+            placeholder="Find..." 
+            class="find-input"
+          >
+          <button id="find-next-btn" class="action-button">Find</button>
+        </div>
       </div>
 
       <div class="editor-container">
-        <!-- CodeMirror will be initialized in this div -->
-        <div id="editor-area"></div>
-        
+        <textarea id="editor" spellcheck="false">// Start typing here...</textarea>
         <div class="status-bar">
           <span id="position">Line: 1, Column: 1</span>
-          <span id="statistics">Characters: 0 & Words: 0</span>
+          <span id="statistics">Characters: 23 & Words: 4</span>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- We'll load CodeMirror using require() in renderer.js -->
   <script src="renderer.js"></script>
 </body>
 </html>
