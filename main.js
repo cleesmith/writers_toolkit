@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog, screen } = require('electron');
 const { v4: uuidv4 } = require('uuid');
 const appState = require('./src/state.js');
 
@@ -121,12 +121,20 @@ function showProjectDialog() {
   }
 }
 
-// Create the main application window
 function createWindow() {
+  // Get the primary display's work area dimensions
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  console.log('*** Screen dimensions:', screen.getPrimaryDisplay().workAreaSize);  
+
+  // Use 90% of the available width and height
+  const windowWidth = Math.floor(width * 0.95);
+  const windowHeight = Math.floor(height * 0.95);
+  
   // Create the browser window
   mainWindow = new BrowserWindow({
-    width: 1100,
-    height: 800,
+    width: windowWidth,
+    height: windowHeight,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -135,6 +143,9 @@ function createWindow() {
     backgroundColor: '#111111', // Dark background
     autoHideMenuBar: false,
   });
+
+  // Center the window
+  mainWindow.center();
 
   // Load the index.html of the app
   mainWindow.loadFile(path.join(__dirname, 'index.html'));

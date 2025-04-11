@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+  <title>Writer's Toolkit - Editor</title>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 20px; 
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    #editor-container {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    #toolbar {
+      padding: 8px 0;
+      margin-bottom: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+    }
+    #toolbar button {
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    #toolbar select {
+      padding: 4px;
+    }
+    #toolbar label {
+      margin-left: 4px;
+      user-select: none;
+    }
+    #editor {
+      width: 100%;
+      flex-grow: 1;
+      resize: none;
+      font-family: monospace;
+      padding: 10px;
+      box-sizing: border-box;
+      border: 1px solid #ddd;
+      outline: none;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .status-bar {
+      border: 1px solid #ddd;
+      border-top: 0;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-family: monospace;
+      display: flex;
+      justify-content: space-between;
+      background-color: #f9f9f9;
+    }
+    .file-path {
+      font-style: italic;
+      color: #666;
+      margin-left: 10px;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="editor-container">
+    <div id="toolbar">
+      <button id="btnNew">New</button>
+      <button id="btnOpen">Open</button>
+      <button id="btnSave">Save</button>
+      <button id="btnSaveAs">Save As</button>
+      <span class="file-path" id="currentFile">No file opened</span>
+      <div style="flex-grow: 1;"></div>
+      <select id="fontSize">
+        <option value="12">12px</option>
+        <option value="14" selected>14px</option>
+        <option value="16">16px</option>
+        <option value="18">18px</option>
+        <option value="20">20px</option>
+      </select>
+      <input type="checkbox" id="wordWrap" checked>
+      <label for="wordWrap">Word Wrap</label>
+    </div>
+    <textarea id="editor" spellcheck="false">// Start typing here...</textarea>
+    <div class="status-bar">
+      <span id="position">Line: 1, Column: 1</span>
+      <span id="statistics">Characters: 0</span>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

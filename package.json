@@ -1,65 +1,48 @@
 {
-  "name": "writers-toolkit-electron",
+  "name": "writers-toolkit",
   "version": "1.0.0",
-  "productName": "Writer's Toolkit",
-  "description": "Writer's Toolkit app",
+  "description": "A toolkit for writers with AI assistance and a text editor",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "electron-builder build --mac --win --publish never",
-    "build:mac": "electron-builder build --mac --publish never",
-    "build:win": "electron-builder build --win --publish never"
+    "start-editor": "electron editor-main.js",
+    "build": "electron-builder"
   },
   "author": "",
-  "license": "MIT",
+  "license": "ISC",
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
   "devDependencies": {
-    "electron": "^29.0.0",
-    "electron-builder": "^26.0.12"
+    "electron": "^26.0.0",
+    "electron-builder": "^24.6.3"
   },
   "build": {
-    "appId": "com.yourname.writerstoolkit",
+    "appId": "com.yourdomain.writerstoolkit",
     "productName": "Writer's Toolkit",
-    "directories": {
-      "output": "dist"
-    },
     "files": [
       "**/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/*.d.ts",
       "!**/node_modules/.bin",
-      "!dist",
-      "!build",
-      "!releases",
       "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
       "!.editorconfig",
-      "!**/._*"
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,__pycache__,thumbs.db,.gitignore,.gitattributes}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
     ],
-    "mac": {
-      "category": "public.app-category.productivity",
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "icon": "build/icon.icns"
+    "directories": {
+      "buildResources": "resources"
     },
     "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "build/icon.ico"
+      "target": "nsis"
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
     }
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
-    "electron-store": "^10.0.1",
-    "uuid": "^11.1.0"
   }
 }
