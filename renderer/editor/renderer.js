@@ -39,6 +39,8 @@ let isDarkMode = true;
 
 // Initialize editor
 function initEditor() {
+  console.log('Initializing editor...');
+  
   // Initialize CodeMirror
   editor = CodeMirror(editorArea, {
     mode: 'text/plain',
@@ -102,6 +104,9 @@ function countWords(text) {
 
 // Set up event listeners
 function setupEventListeners() {
+  console.log('Setting up event listeners...');
+  console.log('API available:', !!window.api);
+  
   // Theme toggle
   themeToggleBtn.addEventListener('click', () => {
     isDarkMode = !isDarkMode;
@@ -184,10 +189,13 @@ function setupEventListeners() {
   
   // IPC events from main process
   if (window.api) {
+    console.log('Setting up IPC event listeners...');
     window.api.onFileNew && window.api.onFileNew(newFile);
     window.api.onFileSaveRequest && window.api.onFileSaveRequest(saveFile);
     window.api.onFileSaveAsRequest && window.api.onFileSaveAsRequest(saveFileAs);
     window.api.onFileOpened && window.api.onFileOpened(handleFileOpened);
+  } else {
+    console.error('API not available! Check your preload script.');
   }
   
   // Window close handling
@@ -217,6 +225,8 @@ function updateThemeIcons() {
 
 // Quit the application
 function quitApp() {
+  console.log('Quit button clicked');
+  
   if (documentChanged) {
     // Ask user about unsaved changes
     const confirmQuit = confirm('You have unsaved changes. Quit anyway?');
@@ -227,6 +237,8 @@ function quitApp() {
       // Directly quit the application without further checks
       if (window.api && window.api.quitApp) {
         window.api.quitApp();
+      } else {
+        console.error('quitApp API not available!');
       }
     }
     // If not confirmed, do nothing (stay in the app)
@@ -234,12 +246,16 @@ function quitApp() {
     // No unsaved changes, quit directly
     if (window.api && window.api.quitApp) {
       window.api.quitApp();
+    } else {
+      console.error('quitApp API not available!');
     }
   }
 }
 
 // File operations
 async function newFile() {
+  console.log('New file button clicked');
+  
   if (documentChanged) {
     if (!confirm('You have unsaved changes. Create a new file anyway?')) {
       return;
@@ -254,6 +270,8 @@ async function newFile() {
 }
 
 async function openFile() {
+  console.log('Open file button clicked');
+  
   if (documentChanged) {
     if (!confirm('You have unsaved changes. Open a different file anyway?')) {
       return;
@@ -261,12 +279,20 @@ async function openFile() {
   }
   
   if (window.api && window.api.openFileDialog) {
-    await window.api.openFileDialog();
-    // The response is handled by the onFileOpened event
+    try {
+      await window.api.openFileDialog();
+      // The response is handled by the onFileOpened event
+    } catch (err) {
+      console.error('Error opening file:', err);
+    }
+  } else {
+    console.error('openFileDialog API not available!');
   }
 }
 
 async function saveFile() {
+  console.log('Save file button clicked');
+  
   if (!currentFilePath) {
     return saveFileAs();
   }
@@ -274,37 +300,51 @@ async function saveFile() {
   const content = editor.getValue();
   
   if (window.api && window.api.saveFile) {
-    const result = await window.api.saveFile({
-      filePath: currentFilePath,
-      content,
-      saveAs: false
-    });
-    
-    if (result && result.success) {
-      documentChanged = false;
-      // Show saved notification briefly
-      showNotification('File saved successfully');
+    try {
+      const result = await window.api.saveFile({
+        filePath: currentFilePath,
+        content,
+        saveAs: false
+      });
+      
+      if (result && result.success) {
+        documentChanged = false;
+        // Show saved notification briefly
+        showNotification('File saved successfully');
+      }
+    } catch (err) {
+      console.error('Error saving file:', err);
     }
+  } else {
+    console.error('saveFile API not available!');
   }
 }
 
 async function saveFileAs() {
+  console.log('Save as file button clicked');
+  
   const content = editor.getValue();
   
   if (window.api && window.api.saveFile) {
-    const result = await window.api.saveFile({
-      filePath: currentFilePath,
-      content,
-      saveAs: true
-    });
-    
-    if (result && result.success) {
-      currentFilePath = result.filePath;
-      currentFileDisplay.textContent = currentFilePath;
-      documentChanged = false;
-      // Show saved notification briefly
-      showNotification('File saved successfully');
+    try {
+      const result = await window.api.saveFile({
+        filePath: currentFilePath,
+        content,
+        saveAs: true
+      });
+      
+      if (result && result.success) {
+        currentFilePath = result.filePath;
+        currentFileDisplay.textContent = currentFilePath;
+        documentChanged = false;
+        // Show saved notification briefly
+        showNotification('File saved successfully');
+      }
+    } catch (err) {
+      console.error('Error saving file as:', err);
     }
+  } else {
+    console.error('saveFile API not available!');
   }
 }
 
@@ -332,6 +372,8 @@ function showNotification(message, duration = 2000) {
 
 // Handle opened file data from main process
 function handleFileOpened(data) {
+  console.log('File opened event received:', data);
+  
   if (data && data.filePath && data.content !== undefined) {
     currentFilePath = data.filePath;
     editor.setValue(data.content);
@@ -342,4 +384,7 @@ function handleFileOpened(data) {
 }
 
 // Initialize the editor when the document is ready
-document.addEventListener('DOMContentLoaded', initEditor);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Document ready, initializing editor...');
+  initEditor();
+});
