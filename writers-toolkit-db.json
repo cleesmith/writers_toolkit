@@ -426,8 +426,7 @@
 						{
 							"name": "Text Files",
 							"extensions": [
-								"txt",
-								"md"
+								"txt"
 							]
 						},
 						{
