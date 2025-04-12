@@ -1,37 +1,99 @@
+<!-- to run:  cd renderer/editor,  npm run start-editor -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';">
-    <title>Simple Text Editor</title>
-    <!-- CodeMirror CSS -->
-    <link rel="stylesheet" href="../../node_modules/codemirror/lib/codemirror.css">
-    <link rel="stylesheet" href="../../node_modules/codemirror/theme/monokai.css">
-    <link rel="stylesheet" href="../../node_modules/codemirror/addon/dialog/dialog.css">
-    <style>
-      body, html { margin: 0; height: 100%; }
-      #buttonBar { padding: 5px; background: #333; color: #fff; }
-      button { margin-right: 10px; }
-      .CodeMirror { height: calc(100% - 40px); }
-    </style>
-  </head>
-  <body>
-    <div id="buttonBar">
-      <button id="openBtn">Open File</button>
-      <button id="saveBtn">Save File</button>
-      <button id="findBtn">Find</button>
-      <button id="quitBtn">Quit</button>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Writer's Toolkit - Editor</title>
+  <!-- Link to main application styles -->
+  <link rel="stylesheet" href="../../styles.css">
+  <!-- Additional editor-specific styles -->
+  <link rel="stylesheet" href="editor-specific.css">
+</head>
+<body class="dark-mode">
+  <header>
+    <div class="header-left">
+      <button id="theme-toggle" class="icon-button">
+        <!-- Sun icon - shown in dark mode -->
+        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        
+        <!-- Moon icon - shown in light mode -->
+        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
     </div>
-    <textarea id="editor">// Start editing...</textarea>
 
-    <!-- CodeMirror JS -->
-    <script src="../../node_modules/codemirror/lib/codemirror.js"></script>
-    <script src="../../node_modules/codemirror/mode/javascript/javascript.js"></script>
-    <script src="../../node_modules/codemirror/addon/search/searchcursor.js"></script>
-    <script src="../../node_modules/codemirror/addon/search/search.js"></script>
-    <script src="../../node_modules/codemirror/addon/dialog/dialog.js"></script>
+    <div class="header-center">
+      <h1>Writer's Toolkit - Editor</h1>
+    </div>
+    
+    <div class="header-right">
+      <button id="quit-button" class="text-button">Quit</button>
+    </div>
+  </header>
+  
+  <main>
+    <section class="card">
+      <div class="file-info">
+        <span id="currentFile">No file opened</span>
+      </div>
+      
+      <div class="toolbar">
+        <button id="btnNew" class="action-button">New</button>
+        <button id="btnOpen" class="action-button">Open</button>
+        <button id="btnSave" class="action-button">Save</button>
+        <button id="btnSaveAs" class="action-button">Save As</button>
+        
+        <div class="select-wrapper">
+          <select id="fontSize">
+            <option value="12">12px</option>
+            <option value="14" selected>14px</option>
+            <option value="16">16px</option>
+            <option value="18">18px</option>
+            <option value="20">20px</option>
+          </select>
+        </div>
+        
+        <div class="select-wrapper">
+          <select id="wordWrap">
+            <option value="on" selected>Wrap: On</option>
+            <option value="off">Wrap: Off</option>
+          </select>
+        </div>
 
-    <!-- Our custom script -->
-    <script src="simple-renderer.js"></script>
-  </body>
+        <!-- Simple find functionality -->
+        <div class="find-container">
+          <input 
+            type="text" 
+            id="find-input" 
+            placeholder="Find..." 
+            class="find-input"
+          >
+          <button id="find-next-btn" class="action-button">Find</button>
+        </div>
+      </div>
+
+      <div class="editor-container">
+        <textarea id="editor" spellcheck="false">// Start typing here...</textarea>
+        <div class="status-bar">
+          <span id="position">Line: 1, Column: 1</span>
+          <span id="statistics">Characters: 23 & Words: 4</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="renderer.js"></script>
+</body>
 </html>

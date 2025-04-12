@@ -1,7 +1,7 @@
 {
   "name": "writers-toolkit",
   "version": "1.0.0",
-  "description": "A toolkit for writers with AI assistance and a CodeMirror text editor",
+  "description": "A toolkit for writers with AI assistance and a text editor",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -11,7 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "codemirror": "^5.65.13",
     "electron-store": "^8.1.0"
   },
   "devDependencies": {

@@ -1,16 +1,5 @@
-// Load CodeMirror using require, which is available in Electron preload context
-const CodeMirror = require('codemirror');
-// Load CodeMirror addons
-require('codemirror/addon/search/search');
-require('codemirror/addon/search/searchcursor');
-require('codemirror/addon/search/jump-to-line');
-require('codemirror/addon/dialog/dialog');
-require('codemirror/addon/wrap/hardwrap');
-require('codemirror/addon/selection/active-line');
-require('codemirror/mode/plain/plain');
-
 // DOM Elements
-const editorArea = document.getElementById('editor-area');
+const editor = document.getElementById('editor');
 const positionDisplay = document.getElementById('position');
 const statsDisplay = document.getElementById('statistics');
 const currentFileDisplay = document.getElementById('currentFile');
@@ -24,11 +13,9 @@ const themeToggleBtn = document.getElementById('theme-toggle');
 const sunIcon = document.getElementById('sun-icon');
 const moonIcon = document.getElementById('moon-icon');
 const quitButton = document.getElementById('quit-button');
-const findButton = document.getElementById('find-button');
+const findInput = document.getElementById('find-input');
+const findNextBtn = document.getElementById('find-next-btn');
 const body = document.body;
-
-// CodeMirror editor instance
-let editor;
 
 // Track the current file
 let currentFilePath = null;
@@ -37,37 +24,37 @@ let documentChanged = false;
 // Track theme state (initially dark)
 let isDarkMode = true;
 
+// Keep track of the current find state
+let currentFindIndex = -1;
+let findMatches = [];
+
 // Initialize editor
 function initEditor() {
-  console.log('Initializing editor...');
-  
-  // Initialize CodeMirror
-  editor = CodeMirror(editorArea, {
-    mode: 'text/plain',
-    lineNumbers: false,
-    lineWrapping: true,
-    autofocus: true,
-    styleActiveLine: true,
-    value: "// Start typing here...",
-    viewportMargin: Infinity
-  });
-  
-  // Set up CodeMirror custom key mapping for tab
-  editor.setOption("extraKeys", {
-    Tab: function(cm) {
-      const spaces = Array(3).join(" "); // 2 spaces
-      cm.replaceSelection(spaces);
+  // Set up tab key behavior
+  editor.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      
+      // Insert a tab at cursor position
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      
+      this.value = this.value.substring(0, start) + 
+                    "  " + 
+                    this.value.substring(end);
+      
+      // Put cursor after the inserted tab
+      this.selectionStart = this.selectionEnd = start + 2;
+      
+      documentChanged = true;
     }
   });
   
-  // Listen for changes in the editor content
-  editor.on("change", function() {
+  // Update the cursor position and stats display
+  editor.addEventListener('keyup', updatePositionAndStats);
+  editor.addEventListener('click', updatePositionAndStats);
+  editor.addEventListener('input', () => {
     documentChanged = true;
-    updatePositionAndStats();
-  });
-  
-  // Listen for cursor activity
-  editor.on("cursorActivity", function() {
     updatePositionAndStats();
   });
   
@@ -80,21 +67,19 @@ function initEditor() {
 
 // Update the position and statistics displays
 function updatePositionAndStats() {
-  if (!editor) return;
+  const text = editor.value;
   
   // Get cursor position
-  const cursor = editor.getCursor();
-  const lineNumber = cursor.line + 1; // CodeMirror lines are 0-indexed
-  const columnNumber = cursor.ch + 1; // CodeMirror columns are 0-indexed
+  const cursorPos = editor.selectionStart;
   
-  // Get content stats
-  const text = editor.getValue();
-  const characterCount = text.length;
-  const wordCount = countWords(text);
+  // Calculate line and column
+  const lines = text.substr(0, cursorPos).split('\n');
+  const lineNumber = lines.length;
+  const columnNumber = lines[lines.length - 1].length + 1;
   
   // Update displays with formatted numbers
   positionDisplay.textContent = `Line: ${lineNumber}, Column: ${columnNumber}`;
-  statsDisplay.textContent = `Characters: ${characterCount.toLocaleString()} & Words: ${wordCount.toLocaleString()}`;
+  statsDisplay.textContent = `Characters: ${text.length.toLocaleString()} & Words: ${countWords(text).toLocaleString()}`;
 }
 
 // Count words in text
@@ -104,9 +89,6 @@ function countWords(text) {
 
 // Set up event listeners
 function setupEventListeners() {
-  console.log('Setting up event listeners...');
-  console.log('API available:', !!window.api);
-  
   // Theme toggle
   themeToggleBtn.addEventListener('click', () => {
     isDarkMode = !isDarkMode;
@@ -132,71 +114,27 @@ function setupEventListeners() {
   // Quit button handler
   quitButton.addEventListener('click', quitApp);
   
-  // Find button triggers CodeMirror's search functionality
-  findButton.addEventListener('click', () => {
-    editor.execCommand('find');
-  });
-  
   // Font size changes
   fontSizeSelect.addEventListener('change', function() {
-    const fontSize = this.value;
-    // Update CodeMirror font size
-    const cmElement = document.querySelector('.CodeMirror');
-    if (cmElement) {
-      cmElement.style.fontSize = `${fontSize}px`;
-    }
+    editor.style.fontSize = `${this.value}px`;
   });
   
   // Word wrap toggle
   wordWrapSelect.addEventListener('change', function() {
     const isWrapped = this.value === 'on';
-    editor.setOption('lineWrapping', isWrapped);
-  });
-  
-  // Set up keyboard shortcuts
-  document.addEventListener('keydown', function(e) {
-    // Ctrl+F for find - Handled by CodeMirror
-    // Ctrl+S for save
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
-      saveFile();
-    }
-    
-    // Ctrl+Shift+S for save as
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'S') {
-      e.preventDefault();
-      saveFileAs();
-    }
-    
-    // Ctrl+N for new file
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-      e.preventDefault();
-      newFile();
-    }
-    
-    // Ctrl+O for open file
-    if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-      e.preventDefault();
-      openFile();
-    }
-    
-    // Ctrl+Q for quit
-    if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
-      e.preventDefault();
-      quitApp();
-    }
+    editor.style.whiteSpace = isWrapped ? 'pre-wrap' : 'pre';
   });
   
   // IPC events from main process
   if (window.api) {
-    console.log('Setting up IPC event listeners...');
     window.api.onFileNew && window.api.onFileNew(newFile);
     window.api.onFileSaveRequest && window.api.onFileSaveRequest(saveFile);
     window.api.onFileSaveAsRequest && window.api.onFileSaveAsRequest(saveFileAs);
     window.api.onFileOpened && window.api.onFileOpened(handleFileOpened);
-  } else {
-    console.error('API not available! Check your preload script.');
   }
+  
+  // Find functionality
+  setupFindEventListeners();
   
   // Window close handling
   window.addEventListener('beforeunload', (e) => {
@@ -225,8 +163,6 @@ function updateThemeIcons() {
 
 // Quit the application
 function quitApp() {
-  console.log('Quit button clicked');
-  
   if (documentChanged) {
     // Ask user about unsaved changes
     const confirmQuit = confirm('You have unsaved changes. Quit anyway?');
@@ -237,8 +173,6 @@ function quitApp() {
       // Directly quit the application without further checks
       if (window.api && window.api.quitApp) {
         window.api.quitApp();
-      } else {
-        console.error('quitApp API not available!');
       }
     }
     // If not confirmed, do nothing (stay in the app)
@@ -246,23 +180,19 @@ function quitApp() {
     // No unsaved changes, quit directly
     if (window.api && window.api.quitApp) {
       window.api.quitApp();
-    } else {
-      console.error('quitApp API not available!');
     }
   }
 }
 
 // File operations
 async function newFile() {
-  console.log('New file button clicked');
-  
   if (documentChanged) {
     if (!confirm('You have unsaved changes. Create a new file anyway?')) {
       return;
     }
   }
   
-  editor.setValue('');
+  editor.value = '';
   currentFilePath = null;
   currentFileDisplay.textContent = 'No file opened';
   documentChanged = false;
@@ -270,8 +200,6 @@ async function newFile() {
 }
 
 async function openFile() {
-  console.log('Open file button clicked');
-  
   if (documentChanged) {
     if (!confirm('You have unsaved changes. Open a different file anyway?')) {
       return;
@@ -279,72 +207,50 @@ async function openFile() {
   }
   
   if (window.api && window.api.openFileDialog) {
-    try {
-      await window.api.openFileDialog();
-      // The response is handled by the onFileOpened event
-    } catch (err) {
-      console.error('Error opening file:', err);
-    }
-  } else {
-    console.error('openFileDialog API not available!');
+    await window.api.openFileDialog();
+    // The response is handled by the onFileOpened event
   }
 }
 
 async function saveFile() {
-  console.log('Save file button clicked');
-  
   if (!currentFilePath) {
     return saveFileAs();
   }
   
-  const content = editor.getValue();
+  const content = editor.value;
   
   if (window.api && window.api.saveFile) {
-    try {
-      const result = await window.api.saveFile({
-        filePath: currentFilePath,
-        content,
-        saveAs: false
-      });
-      
-      if (result && result.success) {
-        documentChanged = false;
-        // Show saved notification briefly
-        showNotification('File saved successfully');
-      }
-    } catch (err) {
-      console.error('Error saving file:', err);
+    const result = await window.api.saveFile({
+      filePath: currentFilePath,
+      content,
+      saveAs: false
+    });
+    
+    if (result && result.success) {
+      documentChanged = false;
+      // Show saved notification briefly
+      showNotification('File saved successfully');
     }
-  } else {
-    console.error('saveFile API not available!');
   }
 }
 
 async function saveFileAs() {
-  console.log('Save as file button clicked');
-  
-  const content = editor.getValue();
+  const content = editor.value;
   
   if (window.api && window.api.saveFile) {
-    try {
-      const result = await window.api.saveFile({
-        filePath: currentFilePath,
-        content,
-        saveAs: true
-      });
-      
-      if (result && result.success) {
-        currentFilePath = result.filePath;
-        currentFileDisplay.textContent = currentFilePath;
-        documentChanged = false;
-        // Show saved notification briefly
-        showNotification('File saved successfully');
-      }
-    } catch (err) {
-      console.error('Error saving file as:', err);
+    const result = await window.api.saveFile({
+      filePath: currentFilePath,
+      content,
+      saveAs: true
+    });
+    
+    if (result && result.success) {
+      currentFilePath = result.filePath;
+      currentFileDisplay.textContent = currentFilePath;
+      documentChanged = false;
+      // Show saved notification briefly
+      showNotification('File saved successfully');
     }
-  } else {
-    console.error('saveFile API not available!');
   }
 }
 
@@ -372,19 +278,108 @@ function showNotification(message, duration = 2000) {
 
 // Handle opened file data from main process
 function handleFileOpened(data) {
-  console.log('File opened event received:', data);
-  
   if (data && data.filePath && data.content !== undefined) {
     currentFilePath = data.filePath;
-    editor.setValue(data.content);
+    editor.value = data.content;
     currentFileDisplay.textContent = currentFilePath;
     documentChanged = false;
     updatePositionAndStats();
   }
 }
 
+// Find functionality
+function setupFindEventListeners() {
+  // Find button click
+  findNextBtn.addEventListener('click', performFind);
+  
+  // Enter key in find input
+  findInput.addEventListener('keydown', function(e) {
+    // Prevent editor from receiving these keystrokes
+    e.stopPropagation();
+    
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      performFind();
+    }
+  });
+  
+  // Prevent other keyboard events from reaching the editor
+  findInput.addEventListener('keyup', function(e) {
+    e.stopPropagation();
+  });
+  
+  findInput.addEventListener('keypress', function(e) {
+    e.stopPropagation();
+  });
+}
+
+// Perform the find operation
+function performFind() {
+  const findText = findInput.value.trim();
+  
+  // Don't search for empty strings
+  if (!findText) {
+    currentFindIndex = -1;
+    findMatches = [];
+    return;
+  }
+  
+  const content = editor.value;
+  findMatches = [];
+  
+  // Find all occurrences of the search text
+  let position = content.indexOf(findText, 0);
+  
+  while (position !== -1) {
+    findMatches.push({
+      start: position,
+      end: position + findText.length
+    });
+    
+    // Find next occurrence
+    position = content.indexOf(findText, position + 1);
+  }
+  
+  // If no matches, reset
+  if (findMatches.length === 0) {
+    currentFindIndex = -1;
+    alert('No matches found');
+    return;
+  }
+  
+  // Move to the next match or first if we're at the end
+  if (currentFindIndex < 0 || currentFindIndex >= findMatches.length - 1) {
+    currentFindIndex = 0;
+  } else {
+    currentFindIndex++;
+  }
+  
+  // Highlight the current match
+  highlightCurrentMatch();
+}
+
+// Highlight the current match
+function highlightCurrentMatch() {
+  if (currentFindIndex < 0 || findMatches.length === 0) return;
+  
+  const match = findMatches[currentFindIndex];
+  
+  // Select the text in the editor
+  editor.focus();
+  editor.setSelectionRange(match.start, match.end);
+  
+  // Scroll to make the match visible
+  editor.blur();
+  editor.focus();
+  
+  // Update status to show match position
+  statsDisplay.textContent = `Match ${currentFindIndex + 1}/${findMatches.length} - Characters: ${editor.value.length.toLocaleString()} & Words: ${countWords(editor.value).toLocaleString()}`;
+}
+
+// Escape special characters for use in a RegExp
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Initialize the editor when the document is ready
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('Document ready, initializing editor...');
-  initEditor();
-});
+document.addEventListener('DOMContentLoaded', initEditor);
