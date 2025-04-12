@@ -373,7 +373,7 @@ function highlightCurrentMatch() {
   editor.focus();
   
   // Update status to show match position
-  statsDisplay.textContent = `Match ${currentFindIndex + 1}/${findMatches.length} - Characters: ${editor.value.length.toLocaleString()} & Words: ${countWords(editor.value).toLocaleString()}`;
+  statsDisplay.textContent = `Found ${currentFindIndex + 1}/${findMatches.length} - Characters: ${editor.value.length.toLocaleString()} & Words: ${countWords(editor.value).toLocaleString()}`;
 }
 
 // Escape special characters for use in a RegExp
