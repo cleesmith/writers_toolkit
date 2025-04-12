@@ -428,42 +428,8 @@
 							"extensions": [
 								"txt"
 							]
-						},
-						{
-							"name": "All Files",
-							"extensions": [
-								"*"
-							]
 						}
 					]
-				},
-				{
-					"name": "output_format",
-					"label": "Output Format",
-					"type": "select",
-					"description": "Format of the analysis output",
-					"default": "text",
-					"choices": [
-						{
-							"value": "text",
-							"label": "Plain Text"
-						},
-						{
-							"value": "json",
-							"label": "JSON"
-						},
-						{
-							"value": "html",
-							"label": "HTML Report"
-						}
-					]
-				},
-				{
-					"name": "verbose",
-					"label": "Verbose Output",
-					"type": "boolean",
-					"description": "Include additional details in the analysis",
-					"default": false
 				}
 			]
 		},

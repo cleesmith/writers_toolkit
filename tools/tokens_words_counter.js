@@ -173,22 +173,6 @@ Desired output tokens: ${args.desired_output_tokens} tokens`;
 }
 
 /**
- * Write tracking file with created file paths
- * @param {string|null} trackingFile - Path to tracking file
- * @param {string[]} createdFiles - List of created file paths
- */
-async function writeOutputTracking(trackingFile, createdFiles) {
-    if (trackingFile) {
-        try {
-            await fs.writeFile(trackingFile, createdFiles.join('\n'), 'utf-8');
-            console.log(`Tracking file written: ${trackingFile}`);
-        } catch (error) {
-            console.error(`Error writing output tracking file: ${error.message}`);
-        }
-    }
-}
-
-/**
  * Main function to run token and word counting process
  */
 async function main() {
@@ -258,11 +242,6 @@ async function main() {
         availableTokens, thinkingBudget
     );
     createdFiles.push(outputFile);
-    
-    // Write output tracking file if requested
-    if (args.output_tracking) {
-        await writeOutputTracking(args.output_tracking, createdFiles);
-    }
 }
 
 // Run the main function and handle any unhandled promise rejections
