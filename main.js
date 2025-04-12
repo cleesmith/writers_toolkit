@@ -44,9 +44,7 @@ const menuTemplate = [
       { label: 'New Project' },
       { label: 'Open Project' },
       { type: 'separator' },
-      { label: 'API Settings', click: () => showApiSettingsDialog() },
-      { type: 'separator' },
-      { label: 'Close Window', accelerator: 'CmdOrCtrl+W', role: 'close' }
+      { label: "Quit Writer's Toolkit", accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }
     ]
   },
   // Edit menu with standard operations
@@ -58,9 +56,18 @@ const menuTemplate = [
       { type: 'separator' },
       { role: 'cut' },
       { role: 'copy' },
-      { role: 'paste' }
+      { role: 'paste' },
+      { type: 'separator' },
+      { label: 'API Settings', click: () => showApiSettingsDialog() }
     ]
   },
+  // Tools menu
+  {
+    label: 'Tools',
+    submenu: [
+      { label: 'Text Editor', click: () => launchEditor() }
+    ]
+  }
   // Add more menus as needed
 ];
 
