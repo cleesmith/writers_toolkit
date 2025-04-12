@@ -1,4 +1,3 @@
-<!-- to run:  cd renderer/editor,  npm run start-editor -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,8 +10,8 @@
   <link rel="stylesheet" href="editor-specific.css">
 </head>
 <body class="dark-mode">
-  <header>
-    <div class="header-left">
+  <div class="toolbar">
+    <div class="toolbar-left">
       <button id="theme-toggle" class="icon-button">
         <!-- Sun icon - shown in dark mode -->
         <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -34,64 +33,49 @@
       </button>
     </div>
 
-    <div class="header-center">
-      <h1>Writer's Toolkit - Editor</h1>
-    </div>
-    
-    <div class="header-right">
-      <button id="quit-button" class="text-button">Quit</button>
-    </div>
-  </header>
-  
-  <main>
-    <section class="card">
-      <div class="file-info">
-        <span id="currentFile">No file opened</span>
+    <div class="toolbar-center">
+      <button id="btnNew" class="action-button">New</button>
+      <button id="btnOpen" class="action-button">Open</button>
+      <button id="btnSave" class="action-button">Save</button>
+      <button id="btnSaveAs" class="action-button">Save As</button>
+      
+      <div class="select-wrapper">
+        <select id="fontSize">
+          <option value="12">12px</option>
+          <option value="14" selected>14px</option>
+          <option value="16">16px</option>
+          <option value="18">18px</option>
+          <option value="20">20px</option>
+        </select>
       </div>
       
-      <div class="toolbar">
-        <button id="btnNew" class="action-button">New</button>
-        <button id="btnOpen" class="action-button">Open</button>
-        <button id="btnSave" class="action-button">Save</button>
-        <button id="btnSaveAs" class="action-button">Save As</button>
-        
-        <div class="select-wrapper">
-          <select id="fontSize">
-            <option value="12">12px</option>
-            <option value="14" selected>14px</option>
-            <option value="16">16px</option>
-            <option value="18">18px</option>
-            <option value="20">20px</option>
-          </select>
-        </div>
-        
-        <div class="select-wrapper">
-          <select id="wordWrap">
-            <option value="on" selected>Wrap: On</option>
-            <option value="off">Wrap: Off</option>
-          </select>
-        </div>
-
-        <!-- Simple find functionality -->
-        <div class="find-container">
-          <input 
-            type="text" 
-            id="find-input" 
-            placeholder="Find..." 
-            class="find-input"
-          >
-          <button id="find-next-btn" class="action-button">Find</button>
-        </div>
+      <div class="select-wrapper">
+        <select id="wordWrap">
+          <option value="on" selected>Wrap: On</option>
+          <option value="off">Wrap: Off</option>
+        </select>
       </div>
-
-      <div class="editor-container">
-        <textarea id="editor" spellcheck="false">// Start typing here...</textarea>
-        <div class="status-bar">
-          <span id="position">Line: 1, Column: 1</span>
-          <span id="statistics">Characters: 23 & Words: 4</span>
-        </div>
+      
+      <div class="find-container">
+        <input type="text" id="find-input" placeholder="Find..." class="find-input">
+        <button id="find-next-btn" class="action-button">Find All</button>
       </div>
-    </section>
+    </div>
+    
+    <div class="toolbar-right">
+      <button id="quit-button" class="text-button">Quit</button>
+    </div>
+  </div>
+  
+  <main>
+    <div class="editor-container">
+      <textarea id="editor" spellcheck="false">// Start typing here...</textarea>
+      <div class="status-bar">
+        <span id="position">Line: 1, Column: 1</span>
+        <span id="currentFile" class="current-file-display">No file opened</span>
+        <span id="statistics">Characters: 23 & Words: 4</span>
+      </div>
+    </div>
   </main>
 
   <script src="renderer.js"></script>
