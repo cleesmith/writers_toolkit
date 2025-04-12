@@ -56,6 +56,15 @@ body.light-mode .toolbar {
   background-color: #5c9ce6;
 }
 
+/* Clear button styling */
+#clear-search-btn {
+  background-color: #666; /* Different color to distinguish from search */
+}
+
+#clear-search-btn:hover {
+  background-color: #777;
+}
+
 /* Icon button (theme toggle) */
 .icon-button {
   display: flex;
@@ -127,7 +136,7 @@ body.light-mode select {
 .find-container {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .find-input {
@@ -146,7 +155,7 @@ body.light-mode .find-input {
   border: 1px solid #ccc;
 }
 
-/* Current file display - now in the status bar */
+/* Current file display - in the status bar */
 .current-file-display {
   font-size: 12px;
   color: #888;

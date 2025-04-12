@@ -15,6 +15,7 @@ const moonIcon = document.getElementById('moon-icon');
 const quitButton = document.getElementById('quit-button');
 const findInput = document.getElementById('find-input');
 const findNextBtn = document.getElementById('find-next-btn');
+const clearSearchBtn = document.getElementById('clear-search-btn');
 const body = document.body;
 
 // Track the current file
@@ -79,7 +80,13 @@ function updatePositionAndStats() {
   
   // Update displays with formatted numbers
   positionDisplay.textContent = `Line: ${lineNumber}, Column: ${columnNumber}`;
-  statsDisplay.textContent = `Characters: ${text.length.toLocaleString()} & Words: ${countWords(text).toLocaleString()}`;
+  
+  // Show search results count if there are matches, otherwise just show character/word count
+  if (findMatches.length > 0 && currentFindIndex >= 0) {
+    statsDisplay.textContent = `Found: ${currentFindIndex + 1}/${findMatches.length} - Characters: ${text.length.toLocaleString()} & Words: ${countWords(text).toLocaleString()}`;
+  } else {
+    statsDisplay.textContent = `Characters: ${text.length.toLocaleString()} & Words: ${countWords(text).toLocaleString()}`;
+  }
 }
 
 // Count words in text
@@ -292,6 +299,9 @@ function setupFindEventListeners() {
   // Find button click
   findNextBtn.addEventListener('click', performFind);
   
+  // Clear search button click
+  clearSearchBtn.addEventListener('click', clearSearch);
+  
   // Enter key in find input
   findInput.addEventListener('keydown', function(e) {
     // Prevent editor from receiving these keystrokes
@@ -313,6 +323,25 @@ function setupFindEventListeners() {
   });
 }
 
+// Clear search functionality
+function clearSearch() {
+  // Clear the search input
+  findInput.value = '';
+  
+  // Reset search variables
+  currentFindIndex = -1;
+  findMatches = [];
+  
+  // Reset any highlighting in the editor
+  // (This assumes you might have applied highlighting to search matches)
+  
+  // Reset the statistics display to remove the "Found: x/xx" text
+  updatePositionAndStats();
+  
+  // Give focus back to the editor
+  editor.focus();
+}
+
 // Perform the find operation
 function performFind() {
   const findText = findInput.value.trim();
@@ -321,6 +350,8 @@ function performFind() {
   if (!findText) {
     currentFindIndex = -1;
     findMatches = [];
+    // Reset statistics display
+    updatePositionAndStats();
     return;
   }
   
@@ -373,12 +404,7 @@ function highlightCurrentMatch() {
   editor.focus();
   
   // Update status to show match position
-  statsDisplay.textContent = `Found ${currentFindIndex + 1}/${findMatches.length} - Characters: ${editor.value.length.toLocaleString()} & Words: ${countWords(editor.value).toLocaleString()}`;
-}
-
-// Escape special characters for use in a RegExp
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  updatePositionAndStats();
 }
 
 // Initialize the editor when the document is ready
