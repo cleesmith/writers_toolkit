@@ -151,6 +151,22 @@ setupRunBtn.addEventListener('click', () => {
   window.electronAPI.showToolSetupDialog(selectedTool);
 });
 
+// Editor button handler
+const openEditorBtn = document.getElementById('open-editor-btn');
+if (openEditorBtn) {
+  openEditorBtn.addEventListener('click', async () => {
+    try {
+      const success = await window.electronAPI.launchEditor();
+      if (!success) {
+        console.error('Failed to launch editor');
+        // You could show an error notification here if you have one
+      }
+    } catch (error) {
+      console.error('Error launching editor:', error);
+    }
+  });
+}
+
 // Open API Settings dialog
 if (apiSettingsBtn) {
   apiSettingsBtn.addEventListener('click', () => {

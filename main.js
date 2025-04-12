@@ -1,3 +1,4 @@
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -338,6 +339,31 @@ function showToolSetupRunDialog(toolName) {
   }
 }
 
+function launchEditor() {
+  return new Promise((resolve) => {
+    try {
+      // Launch the editor as a detached process
+      const editorProcess = spawn(
+        process.execPath, // Current Electron executable
+        [path.join(__dirname, 'editor-main.js')], // Path to editor-main.js 
+        {
+          detached: true,  // Run independently from parent
+          stdio: 'ignore', // Don't pipe stdio
+          env: process.env // Pass environment variables
+        }
+      );
+      
+      // Allow the editor to run independently
+      editorProcess.unref();
+      
+      resolve(true);
+    } catch (error) {
+      console.error('Error launching editor:', error);
+      resolve(false);
+    }
+  });
+}
+
 // Setup handlers for tool operations
 function setupToolHandlers() {
   // This local `database` reference is initially null, so we lazy-load it.
@@ -633,6 +659,17 @@ function setupIPCHandlers() {
   // Show API settings dialog
   ipcMain.on('show-api-settings-dialog', () => {
     showApiSettingsDialog();
+  });
+
+  // Handler for launching the text editor
+  ipcMain.on('launch-editor', async (event) => {
+    const result = await launchEditor();
+    event.returnValue = result;
+  });
+
+  // Also add a handle version for Promise-based calls
+  ipcMain.handle('launch-editor', async () => {
+    return await launchEditor();
   });
   
   // Get current project info

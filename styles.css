@@ -124,6 +124,22 @@ body.dark-mode .icon-button {
   background-color: var(--primary-hover);
 }
 
+.button-container {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#open-editor-btn {
+  margin-left: 10px;
+  background-color: #5c9ce6;
+}
+
+#open-editor-btn:hover {
+  background-color: #4a89dc;
+}
+
 .center-button {
   margin: 20px auto;
   display: block;
