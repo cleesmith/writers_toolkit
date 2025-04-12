@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 
-import Anthropic from '@anthropic-ai/sdk';
-import fs from 'fs/promises';
-import path from 'path';
-import { ArgumentParser } from 'argparse';
-import { fileURLToPath } from 'url';
+const Anthropic = require('@anthropic-ai/sdk');
+const fs = require('fs/promises');
+const path = require('path');
+const { ArgumentParser } = require('argparse');
 
-// Helper to get __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// No need for fileURLToPath in CommonJS
+// __dirname is available directly in CommonJS
 
 /**
  * Parses command-line arguments for token and word counting

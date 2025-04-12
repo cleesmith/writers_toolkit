@@ -319,24 +319,20 @@ function createToolSetupRunDialog(toolName) {
   return toolSetupRunWindow;
 }
 
-// Show the tool setup dialog
+// Show the tool setup dialog - MODIFIED: always recreate the window
 function showToolSetupRunDialog(toolName) {
-  if (!toolSetupRunWindow || toolSetupRunWindow.isDestroyed()) {
-    createToolSetupRunDialog(toolName);
-  } else {
-    toolSetupRunWindow.show();
-    
-    // Re-apply the theme when showing an existing window
-    if (mainWindow) {
-      mainWindow.webContents.executeJavaScript('document.body.classList.contains("light-mode")')
-        .then(isLightMode => {
-          if (toolSetupRunWindow && !toolSetupRunWindow.isDestroyed()) {
-            toolSetupRunWindow.webContents.send('set-theme', isLightMode ? 'light' : 'dark');
-          }
-        })
-        .catch(err => console.error('Error getting theme:', err));
-    }
+  // Always close any existing tool window first
+  if (toolSetupRunWindow && !toolSetupRunWindow.isDestroyed()) {
+    toolSetupRunWindow.destroy();
+    toolSetupRunWindow = null;
   }
+  
+  // Store the selected tool
+  currentTool = toolName;
+  console.log(`Creating new tool setup dialog for: ${toolName}`);
+  
+  // Create a new dialog window with the current tool
+  createToolSetupRunDialog(toolName);
 }
 
 function launchEditor() {
@@ -405,17 +401,17 @@ function setupToolHandlers() {
   
   // Show tool setup dialog
   ipcMain.on('show-tool-setup-dialog', (event, toolName) => {
-    // Store the currently selected tool
-    currentTool = toolName;
     showToolSetupRunDialog(toolName);
   });
   
-  // Handle tool dialog closing
+  // Handle tool dialog closing - MODIFIED: now destroys the window
   ipcMain.on('close-tool-dialog', (event, action, data) => {
     console.log('Tool dialog close action:', action);
     
     if (toolSetupRunWindow && !toolSetupRunWindow.isDestroyed()) {
-      toolSetupRunWindow.hide();
+      // Destroy the window instead of hiding it
+      toolSetupRunWindow.destroy();
+      toolSetupRunWindow = null;
     }
   });
   

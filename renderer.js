@@ -147,7 +147,10 @@ setupRunBtn.addEventListener('click', () => {
     return;
   }
   
-  // Launch the tool setup dialog
+  // Log the selected tool for debugging
+  console.log(`Launching tool setup dialog for: ${selectedTool}`);
+  
+  // Launch the tool setup dialog with the current selection
   window.electronAPI.showToolSetupDialog(selectedTool);
 });
 

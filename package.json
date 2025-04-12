@@ -6,11 +6,14 @@
   "scripts": {
     "start": "electron .",
     "start-editor": "electron editor-main.js",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "tokens-counter": "node tools/tokens_words_counter.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "argparse": "^2.0.1",
     "electron-store": "^8.1.0",
     "uuid": "^11.1.0"
   },
